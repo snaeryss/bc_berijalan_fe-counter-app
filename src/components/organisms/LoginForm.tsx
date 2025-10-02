@@ -7,7 +7,7 @@ import { useLoginUser } from "@/services/auth/wrapper.service";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
-import Image from "next/image"; // Import komponen Image dari Next.js
+import Image from "next/image"; 
 
 export default function LoginForm() {
   const router = useRouter();
@@ -40,20 +40,16 @@ export default function LoginForm() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
       <Card className="max-w-md w-full shadow-2xl rounded-xl">
         <div className="flex flex-col items-center mb-8">
-          {/* =====================================================
-            BAGIAN INI YANG AKU GANTI UNTUK LOGO
-            =====================================================
-          */}
           <div className="mb-4">
              <Image
-                src="/berijalan.webp" // Pastikan path ini sesuai dengan lokasi logomu
+                src="/berijalan.webp" 
                 alt="Logo Berijalan"
-                width={120} // Sesuaikan lebar logo sesuai kebutuhan
-                height={120} // Sesuaikan tinggi logo sesuai kebutuhan (penting untuk Next/Image)
-                className="object-contain" // Agar logo tidak terpotong dan tetap proporsional
+                width={120} 
+                height={120} 
+                className="object-contain" 
             />
           </div>
-          {/* ===================================================== */}
+          
 
           <h1 className="text-2xl font-bold text-gray-800">
             Admin Login

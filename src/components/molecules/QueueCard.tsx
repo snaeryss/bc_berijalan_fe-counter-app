@@ -6,7 +6,6 @@ import { cn } from '@/utils/classname.util'
 import Badge from '../atoms/Badge'
 
 interface QueueCardProps {
-  // Kita akan meng-cast tipe `queue` di dalam komponen untuk mengakomodasi `queueNumber`
   queue: any 
   className?: string
 }
@@ -47,10 +46,7 @@ const QueueCard: React.FC<QueueCardProps> = ({ queue, className }) => {
         <div className="flex items-center gap-4">
             <div className="flex flex-col items-center justify-center bg-gray-100 rounded-lg w-24 h-24">
                 <span className="text-xs text-gray-500">Nomor</span>
-                {/* =====================================================
-                  PERBAIKAN FINAL: Menggunakan `queue.queueNumber`
-                  =====================================================
-                */}
+                
                 <span className="text-4xl font-bold text-gray-800">{queue.queueNumber}</span>
             </div>
             <div>
@@ -63,7 +59,6 @@ const QueueCard: React.FC<QueueCardProps> = ({ queue, className }) => {
             </div>
         </div>
 
-        {/* Right Side: Status Badge */}
         <Badge variant={variant as any} size="lg" icon={<span className="material-symbols-outlined text-base">{icon}</span>}>
             {text}
         </Badge>

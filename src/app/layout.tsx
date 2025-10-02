@@ -31,6 +31,7 @@ export default async function RootLayout({
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+
         <NextTopLoader color="#0089CF" height={2} zIndex={10001} />
         <Toaster position="top-right" />
         <RouterInterceptor />
