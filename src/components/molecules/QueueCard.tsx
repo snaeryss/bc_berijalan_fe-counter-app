@@ -6,40 +6,27 @@ import { cn } from '@/utils/classname.util'
 import Badge from '../atoms/Badge'
 
 interface QueueCardProps {
-  queue: IQueue
+  // Kita akan meng-cast tipe `queue` di dalam komponen untuk mengakomodasi `queueNumber`
+  queue: any 
   className?: string
 }
 
 const QueueCard: React.FC<QueueCardProps> = ({ queue, className }) => {
-  const getBadgeVariant = () => {
+  const getStatusInfo = () => {
     switch (queue.status) {
-      case 'CLAIMED':
-        return 'warning'
       case 'CALLED':
-        return 'primary'
+        return { variant: 'primary', text: 'Sedang Dipanggil', icon: 'campaign' };
       case 'SERVED':
-        return 'success'
+        return { variant: 'success', text: 'Selesai Dilayani', icon: 'task_alt' };
       case 'SKIPPED':
-        return 'danger'
+        return { variant: 'danger', text: 'Dilewati', icon: 'skip_next' };
+      case 'CLAIMED':
       default:
-        return 'default'
+        return { variant: 'warning', text: 'Sedang Menunggu', icon: 'hourglass_top' };
     }
   }
 
-  const getStatusText = () => {
-    switch (queue.status) {
-      case 'CLAIMED':
-        return 'Menunggu'
-      case 'CALLED':
-        return 'Sedang Dilayani'
-      case 'SERVED':
-        return 'Selesai'
-      case 'SKIPPED':
-        return 'Dilewati'
-      default:
-        return 'Unknown'
-    }
-  }
+  const { variant, text, icon } = getStatusInfo();
 
   // Format time from ISO string
   const formatTime = (isoString: string) => {
@@ -53,20 +40,33 @@ const QueueCard: React.FC<QueueCardProps> = ({ queue, className }) => {
   return (
     <Card
       variant="outline"
-      className={cn('transition-all', queue.status === 'CALLED' ? 'border-blue-500 bg-blue-50' : '', className)}
+      className={cn('transition-all', className)}
     >
-      <div className="flex flex-col">
-        <div className="flex items-start justify-between">
-          <h3 className="text-2xl font-bold text-gray-900">{queue.queueNumber}</h3>
-          <Badge variant={getBadgeVariant()}>{getStatusText()}</Badge>
+      <div className="flex items-center justify-between">
+        {/* Left Side: Queue Number and Counter */}
+        <div className="flex items-center gap-4">
+            <div className="flex flex-col items-center justify-center bg-gray-100 rounded-lg w-24 h-24">
+                <span className="text-xs text-gray-500">Nomor</span>
+                {/* =====================================================
+                  PERBAIKAN FINAL: Menggunakan `queue.queueNumber`
+                  =====================================================
+                */}
+                <span className="text-4xl font-bold text-gray-800">{queue.queueNumber}</span>
+            </div>
+            <div>
+                <h3 className="text-lg font-semibold text-gray-800">
+                    {queue.counter ? queue.counter.name : "Belum ada counter"}
+                </h3>
+                <p className="text-sm text-gray-500 mt-1">
+                    Waktu Klaim: {formatTime(queue.createdAt)}
+                </p>
+            </div>
         </div>
 
-        <div className="mt-4 flex items-center justify-between text-sm text-gray-500">
-          <div>
-            {queue.counter ? <span>Counter: {queue.counter.name}</span> : <span>Belum ditugaskan ke counter</span>}
-          </div>
-          <div>{formatTime(queue.createdAt)}</div>
-        </div>
+        {/* Right Side: Status Badge */}
+        <Badge variant={variant as any} size="lg" icon={<span className="material-symbols-outlined text-base">{icon}</span>}>
+            {text}
+        </Badge>
       </div>
     </Card>
   )

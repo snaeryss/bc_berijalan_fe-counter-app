@@ -8,8 +8,8 @@ interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
 
 const Card: React.FC<CardProps> = ({ children, className, variant = 'default', ...props }) => {
   const variantStyles = {
-    default: 'bg-white shadow-md',
-    outline: 'bg-white border border-gray-200',
+    default: 'bg-white shadow-md hover:shadow-lg transition-shadow',
+    outline: 'bg-white border border-gray-200 hover:shadow-lg transition-shadow',
     ghost: 'bg-transparent',
   }
 

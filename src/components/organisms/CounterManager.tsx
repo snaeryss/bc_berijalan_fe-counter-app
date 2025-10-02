@@ -74,6 +74,8 @@ const CounterManager: React.FC<CounterManagerProps> = ({ className }) => {
   };
 
   const handleCounterClick = (counter: ICounter) => {
+    // Jika form sedang aktif, jangan lakukan apa-apa
+    if(isAddingCounter || editingCounter) return;
     setSelectedCounter(counter.id === selectedCounter?.id ? null : counter);
   };
 
@@ -136,10 +138,10 @@ const CounterManager: React.FC<CounterManagerProps> = ({ className }) => {
       <Card className="mb-6">
         <div className="flex justify-between items-center">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">
+            <h2 className="text-2xl font-bold text-gray-800">
               Manajemen Counter
             </h2>
-            <p className="text-gray-600 mt-1">Kelola counter/loket pelayanan</p>
+            <p className="text-gray-500 mt-1">Kelola semua counter/loket pelayanan yang tersedia.</p>
           </div>
           {!isAddingCounter && !editingCounter && (
             <Button
@@ -154,71 +156,54 @@ const CounterManager: React.FC<CounterManagerProps> = ({ className }) => {
 
       {isAddingCounter || editingCounter ? (
         <Card>
-          <h3 className="text-lg font-semibold mb-4">
-            {editingCounter ? "Edit Counter" : "Tambah Counter Baru"}
-          </h3>
+          <div className="flex justify-between items-center mb-4">
+             <h3 className="text-lg font-semibold">
+                {editingCounter ? "Edit Counter" : "Tambah Counter Baru"}
+             </h3>
+             <Button variant="ghost" onClick={handleCancel} className="text-gray-500 hover:bg-gray-100">
+                Batal
+             </Button>
+          </div>
           <CounterForm
             counter={editingCounter || undefined}
             onSubmit={handleSubmit}
             isLoading={isCreating || isUpdating}
             isEditMode={!!editingCounter}
           />
-          <div className="flex justify-end mt-4">
-            <Button variant="outline" onClick={handleCancel}>
-              Batal
-            </Button>
-          </div>
         </Card>
       ) : (
         <>
           {selectedCounter && (
-            <div className="flex gap-2 mb-4">
-              <Button
-                variant="outline"
-                onClick={handleViewDetails}
-                leftIcon={<span className="material-symbols-outlined">visibility</span>}
-              >
-                Lihat Detail
-              </Button>
-              
-              <Button
-                variant="outline"
-                onClick={handleEditCounter}
-                leftIcon={
-                  <span className="material-symbols-outlined">edit</span>
-                }
-              >
-                Edit
-              </Button>
-
-              <Button
-                variant={selectedCounter.isActive ? "secondary" : "primary"}
-                onClick={handleToggleStatus}
-                isLoading={isUpdatingStatus}
-                leftIcon={
-                  <span className="material-symbols-outlined">
-                    {selectedCounter.isActive ? "toggle_off" : "toggle_on"}
-                  </span>
-                }
-              >
-                {selectedCounter.isActive ? "Non-aktifkan" : "Aktifkan"}
-              </Button>
-
-              <Button
-                variant="danger"
-                onClick={handleDeleteCounter}
-                isLoading={isDeleting}
-                leftIcon={
-                  <span className="material-symbols-outlined">delete</span>
-                }
-              >
-                Hapus
-              </Button>
-            </div>
+             <Card variant="outline" className="mb-6 bg-gray-50">
+                <div className="flex items-center justify-between">
+                    <p className="text-sm font-semibold text-gray-700">
+                        Aksi untuk: <span className="text-blue-600">{selectedCounter.name}</span>
+                    </p>
+                    <div className="flex gap-2">
+                        <Button size="sm" variant="outline" onClick={handleViewDetails} leftIcon={<span className="material-symbols-outlined text-base">visibility</span>}>
+                            Detail
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={handleEditCounter} leftIcon={<span className="material-symbols-outlined text-base">edit</span>}>
+                            Edit
+                        </Button>
+                        <Button
+                            size="sm"
+                            variant={selectedCounter.isActive ? "secondary" : "primary"}
+                            onClick={handleToggleStatus} isLoading={isUpdatingStatus}
+                            leftIcon={<span className="material-symbols-outlined text-base">{selectedCounter.isActive ? "toggle_off" : "toggle_on"}</span>}
+                        >
+                            {selectedCounter.isActive ? "Non-aktifkan" : "Aktifkan"}
+                        </Button>
+                        <Button size="sm" variant="danger" onClick={handleDeleteCounter} isLoading={isDeleting} leftIcon={<span className="material-symbols-outlined text-base">delete</span>}>
+                            Hapus
+                        </Button>
+                    </div>
+                </div>
+            </Card>
           )}
 
           {counters.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {counters.map((counter) => (
                 <CounterCard
                   key={counter.id}
@@ -229,10 +214,15 @@ const CounterManager: React.FC<CounterManagerProps> = ({ className }) => {
               ))}
             </div>
           ) : (
-            <Card variant="outline" className="text-center py-8 text-gray-500">
-              Belum ada counter. Klik 'Tambah Counter' untuk membuat counter
-              baru.
-            </Card>
+             <div className="text-center py-16">
+                <div className="bg-gray-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <span className="material-symbols-outlined text-4xl text-gray-400">
+                    store
+                    </span>
+                </div>
+                <p className="text-lg text-gray-500">Belum ada counter.</p>
+                <p className="text-sm text-gray-400 mt-1">Klik 'Tambah Counter' untuk membuat yang baru.</p>
+            </div>
           )}
         </>
       )}

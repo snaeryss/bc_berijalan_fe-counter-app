@@ -35,33 +35,36 @@ const QueueStatusChecker: React.FC<QueueStatusCheckerProps> = ({
   return (
     <div className={className}>
       <Card className="mb-6">
-        <h2 className="text-2xl font-bold text-center text-gray-900 mb-2">
-          Cek Status Antrian
-        </h2>
-        <p className="text-center text-gray-600 mb-6">
-          Masukkan nomor antrian atau nama counter untuk memeriksa status
-        </p>
+        <div className="text-center">
+            <div className="bg-green-500 rounded-full p-4 mb-6 inline-block">
+              <span className="material-symbols-outlined text-white text-4xl">
+                search
+              </span>
+            </div>
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">
+            Cek Status Antrian Anda
+            </h2>
+            <p className="text-gray-500 mb-8">
+            Masukkan nomor antrian atau nama counter untuk melihat status terkini.
+            </p>
+        </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="flex items-center gap-2">
           <Input
-            label="Nomor Antrian atau Nama Counter"
             placeholder="Contoh: 123 atau Counter A"
             fullWidth
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            leftIcon={
-              <span className="material-symbols-outlined">search</span>
-            }
+            className="flex-grow"
           />
-          <div className="flex justify-end">
-            <Button
-              type="submit"
-              isLoading={isLoading || isFetching}
-              disabled={!searchQuery || isLoading || isFetching}
-            >
-              Cari Antrian
-            </Button>
-          </div>
+          <Button
+            type="submit"
+            isLoading={isLoading || isFetching}
+            disabled={!searchQuery || isLoading || isFetching}
+            className="flex-shrink-0"
+          >
+            Cari
+          </Button>
         </form>
       </Card>
 
@@ -69,7 +72,7 @@ const QueueStatusChecker: React.FC<QueueStatusCheckerProps> = ({
 
       {!isFetching && queues.length > 0 && (
         <div className="space-y-4">
-          <h3 className="text-lg font-semibold">Hasil Pencarian:</h3>
+          <h3 className="text-lg font-semibold text-gray-700 px-1">Hasil Pencarian:</h3>
           {queues.map((queue) => (
             <QueueCard key={queue.id} queue={queue} />
           ))}
@@ -77,8 +80,16 @@ const QueueStatusChecker: React.FC<QueueStatusCheckerProps> = ({
       )}
 
       {notFound && (
-        <Card variant="outline" className="text-center py-6 text-gray-500">
-          Antrian dengan nomor atau nama counter <strong>{submittedQuery}</strong> tidak ditemukan.
+        <Card variant="outline" className="text-center py-10">
+           <div className="bg-gray-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="material-symbols-outlined text-4xl text-gray-400">
+                quiz
+                </span>
+            </div>
+          <p className="text-lg text-gray-500">Antrian tidak ditemukan</p>
+          <p className="text-sm text-gray-400 mt-1">
+            Pastikan nomor antrian atau nama counter "<strong>{submittedQuery}</strong>" sudah benar.
+          </p>
         </Card>
       )}
     </div>
@@ -86,3 +97,4 @@ const QueueStatusChecker: React.FC<QueueStatusCheckerProps> = ({
 };
 
 export default QueueStatusChecker;
+

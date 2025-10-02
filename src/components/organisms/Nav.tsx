@@ -18,13 +18,16 @@ const NavItem: React.FC<NavItemProps> = ({ href, icon, label }) => {
     <Link
       href={href}
       className={cn(
-        'flex items-center gap-3 px-3 py-2 rounded-md transition-colors text-sm',
+        'flex items-center gap-3 px-3 py-2 rounded-lg transition-all text-sm group',
         isActive 
-          ? 'bg-blue-100 text-blue-700 font-semibold' 
-          : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+          ? 'bg-blue-50 text-blue-600 font-semibold' 
+          : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900'
       )}
     >
-      <span className="material-symbols-outlined text-base">{icon}</span>
+      <span className={cn(
+        'material-symbols-outlined text-base transition-transform',
+        isActive ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-600'
+      )}>{icon}</span>
       <span>{label}</span>
     </Link>
   )
@@ -35,7 +38,7 @@ interface NavCategoryProps {
 }
 
 const NavCategory: React.FC<NavCategoryProps> = ({ title }) => (
-  <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider px-3 mt-6 mb-2">
+  <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider px-3 mt-6 mb-2">
     {title}
   </h3>
 )
@@ -65,14 +68,17 @@ const Nav: React.FC<{ className?: string }> = ({ className }) => {
           <button
             onClick={() => setIsManagementOpen(!isManagementOpen)}
             className={cn(
-              'w-full flex items-center justify-between gap-3 px-3 py-2 rounded-md transition-colors text-sm',
+              'w-full flex items-center justify-between gap-3 px-3 py-2 rounded-lg transition-all text-sm group',
               isManagementPageActive
-                ? 'bg-blue-100 text-blue-700 font-semibold'
-                : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                ? 'bg-blue-50 text-blue-600 font-semibold'
+                : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900'
             )}
           >
             <div className="flex items-center gap-3">
-              <span className="material-symbols-outlined text-base">settings</span>
+              <span className={cn(
+                'material-symbols-outlined text-base transition-transform',
+                isManagementPageActive ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-600'
+              )}>settings</span>
               <span>Manajemen</span>
             </div>
             <span className={cn(
@@ -84,7 +90,7 @@ const Nav: React.FC<{ className?: string }> = ({ className }) => {
           </button>
 
           {isManagementOpen && (
-            <div className="mt-1 pl-6 space-y-1 border-l-2 border-gray-200 ml-4">
+            <div className="mt-2 pl-7 space-y-1 border-l-2 border-gray-200 ml-4">
               <NavItem href="/counter-manager" icon="store" label="Manajemen Counter" />
               <NavItem href="/queue-management" icon="receipt_long" label="Manajemen Antrian" />
             </div>

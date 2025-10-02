@@ -158,54 +158,57 @@ const QueueManagementPage: React.FC = () => {
       <Card>
         <div className="flex justify-between items-center">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">
+            <h2 className="text-2xl font-bold text-gray-800">
               Manajemen Antrian
             </h2>
-            <p className="text-gray-600 mt-1">
-              Kelola semua antrian yang ada di sistem.
+            <p className="text-gray-500 mt-1">
+              Kelola semua data antrian yang masuk ke dalam sistem.
             </p>
           </div>
           <div className="flex gap-2">
-            {selectedQueues.length > 0 ? (
-              <Button
-                variant="danger"
-                onClick={handleBulkDelete}
-                isLoading={isBulkDeleting}
-                leftIcon={
-                  <span className="material-symbols-outlined">delete</span>
-                }
-              >
-                Hapus {selectedQueues.length} item
-              </Button>
-            ) : (
-              <>
-                <Button
-                  variant="secondary"
-                  leftIcon={
-                    <span className="material-symbols-outlined">refresh</span>
-                  }
-                  onClick={handleResetAll}
-                  isLoading={isResetting}
-                >
-                  Reset Semua Antrian
-                </Button>
-                <Button
-                  leftIcon={
-                    <span className="material-symbols-outlined">add</span>
-                  }
-                  onClick={handleOpenCreate}
-                >
-                  Buat Antrian Baru
-                </Button>
-              </>
-            )}
+            <Button
+              variant="secondary"
+              leftIcon={
+                <span className="material-symbols-outlined">refresh</span>
+              }
+              onClick={handleResetAll}
+              isLoading={isResetting}
+            >
+              Reset Semua Antrian
+            </Button>
+            <Button
+              leftIcon={
+                <span className="material-symbols-outlined">add</span>
+              }
+              onClick={handleOpenCreate}
+            >
+              Buat Antrian Baru
+            </Button>
           </div>
         </div>
       </Card>
 
       <Card>
+        {selectedQueues.length > 0 && (
+             <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-md mb-4">
+                <div className="flex items-center justify-between">
+                    <p className="text-sm font-semibold text-blue-800">
+                        {selectedQueues.length} item terpilih
+                    </p>
+                    <Button
+                        size="sm"
+                        variant="danger"
+                        onClick={handleBulkDelete}
+                        isLoading={isBulkDeleting}
+                        leftIcon={<span className="material-symbols-outlined text-base">delete</span>}
+                    >
+                        Hapus item terpilih
+                    </Button>
+                </div>
+            </div>
+        )}
         {isLoading ? (
-          <p>Loading data antrian...</p>
+          <p className="text-center py-10 text-gray-500">Memuat data antrian...</p>
         ) : (
           <QueueTable
             queues={queuesData?.data || []}
