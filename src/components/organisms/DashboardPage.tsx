@@ -4,13 +4,14 @@ import React, { useEffect } from "react";
 import Card from "../atoms/Card";
 import { useGetMetrics } from "@/services/queue/wrapper.service";
 import { useQueryClient } from "@tanstack/react-query";
+import { useSSEContext } from "./SSEProvider"; // <-- 1. IMPORT HOOK SSE CONTEXT
 
 const DashboardPage = () => {
-
   const { data: metricsData } = useGetMetrics();
   const metrics = metricsData?.data;
 
   const queryClient = useQueryClient();
+  const { addEventListener } = useSSEContext(); // <-- 2. PANGGIL HOOK UNTUK MENDAPATKAN FUNGSI
 
   useEffect(() => {
     const refetchMetrics = () => {
@@ -30,6 +31,11 @@ const DashboardPage = () => {
     const unsubscribers = eventsToListen.map(event => 
       addEventListener(event, refetchMetrics)
     );
+
+    // Cleanup function untuk menghapus listener saat komponen di-unmount
+    return () => {
+      unsubscribers.forEach(unsubscribe => unsubscribe());
+    };
 
   }, [addEventListener, queryClient]);
 

@@ -195,3 +195,14 @@ export const apiUpdateQueueStatus = async (data: IUpdateQueueStatusRequest) => {
     return errorMessage<IQueue>(e);
   }
 };
+
+export const apiGetActiveQueueByCounterId = async (counterId: number) => {
+  try {
+    const res = await satellite.get<APIBaseResponse<IQueue>>(
+      `${API_BASE_PATH}/counter/${counterId}/active`
+    );
+    return res.data;
+  } catch (e) {
+    return errorMessage<IQueue>(e);
+  }
+};

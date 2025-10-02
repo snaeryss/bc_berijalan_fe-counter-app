@@ -109,7 +109,7 @@ const QueueTicketPage: FC<QueueTicketProps> = ({ className }) => {
               onClick={handleReleaseQueue}
               isLoading={isReleasing}
             >
-              Ambil Nomor Baru
+              Batalkan Antrian & Ambil Nomor Baru
             </Button>
           </div>
         )}

@@ -8,11 +8,11 @@ import Select from "../atoms/Select";
 import CurrentQueueDisplay from "../molecules/CurrentQueueDisplay";
 import { useGetAllCounters } from "@/services/counter/wrapper.service";
 import {
+  useGetActiveQueue, // <-- 1. IMPORT HOOK BARU
   useNextQueue,
-  useSkipQueue,
   useServeQueue,
+  useSkipQueue,
 } from "@/services/queue/wrapper.service";
-import { useCounterAppStore } from "@/stores/global-states/counter/counter-app.store";
 import toast from "react-hot-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { useSSEContext } from "./SSEProvider";
@@ -22,17 +22,22 @@ interface CounterOperatorProps {
 }
 
 const CounterOperator: React.FC<CounterOperatorProps> = ({ className }) => {
-  const [selectedCounter, setSelectedCounter] = useState<ICounter | null>(null);
+  const [selectedCounter, setSelectedCounter] = useState<ICounter | null>(
+    null
+  );
   const [currentQueue, setCurrentQueue] = useState<IQueue | null>(null);
 
   const queryClient = useQueryClient();
   const { addEventListener } = useSSEContext();
 
   const { data: countersData, refetch: refetchCounters } = useGetAllCounters();
+  const { mutate: getActiveQueue, isPending: isFetchingCurrent } =
+    useGetActiveQueue(); // <-- 2. INISIALISASI HOOK
   const { mutate: nextQueue, isPending: isNexting } = useNextQueue();
   const { mutate: skipQueue, isPending: isSkipping } = useSkipQueue();
   const { mutate: serveQueue, isPending: isServing } = useServeQueue();
 
+  // ... (useEffect tidak ada perubahan)
   useEffect(() => {
     const handleQueueUpdate = () => {
       console.log(
@@ -61,6 +66,7 @@ const CounterOperator: React.FC<CounterOperatorProps> = ({ className }) => {
     };
   }, [addEventListener, refetchCounters, queryClient]);
 
+
   const activeCounters: ICounter[] =
     countersData?.data?.filter((c) => c.isActive) || [];
 
@@ -68,9 +74,31 @@ const CounterOperator: React.FC<CounterOperatorProps> = ({ className }) => {
     const counterId = parseInt(e.target.value);
     const counter = activeCounters.find((c) => c.id === counterId);
     setSelectedCounter(counter || null);
-    setCurrentQueue(null);
+    setCurrentQueue(null); // Reset saat ganti counter
+  };
+  
+  // 3. BUAT FUNGSI BARU UNTUK FETCH ANTRIAN SAAT INI
+  const handleFetchCurrentQueue = () => {
+    if (!selectedCounter) return;
+
+    getActiveQueue(selectedCounter.id, {
+      onSuccess: (res) => {
+        if (res.status && res.data) {
+          setCurrentQueue(res.data);
+          toast.success(`Antrian saat ini: ${res.data.number}`);
+        } else {
+          setCurrentQueue(null);
+          toast.info("Tidak ada antrian yang sedang dilayani.");
+        }
+      },
+      onError: () => {
+        toast.error("Gagal mengambil data antrian saat ini.");
+      },
+    });
   };
 
+
+  // ... (handleNextQueue, handleServeQueue, handleSkipQueue tidak ada perubahan)
   const handleNextQueue = () => {
     if (!selectedCounter) {
       toast.error("Silakan pilih counter terlebih dahulu.");
@@ -204,6 +232,7 @@ const CounterOperator: React.FC<CounterOperatorProps> = ({ className }) => {
     );
   };
 
+
   return (
     <div className={className}>
       <Card className="mb-6">
@@ -232,6 +261,26 @@ const CounterOperator: React.FC<CounterOperatorProps> = ({ className }) => {
 
       {selectedCounter ? (
         <div className="space-y-6">
+          {/* 4. TAMPILKAN TOMBOL BARU JIKA TIDAK ADA ANTRIAN AKTIF DI LAYAR */}
+          {!currentQueue && (
+            <Card variant="outline">
+              <div className="flex items-center justify-between">
+                <p className="text-gray-600">
+                  Tidak ada antrian aktif di layar Anda.
+                </p>
+                <Button
+                  onClick={handleFetchCurrentQueue}
+                  isLoading={isFetchingCurrent}
+                  leftIcon={
+                    <span className="material-symbols-outlined">sync</span>
+                  }
+                >
+                  Lihat Antrian Saat Ini
+                </Button>
+              </div>
+            </Card>
+          )}
+
           <CurrentQueueDisplay
             counterName={selectedCounter.name}
             queueNumber={currentQueue?.number || null}
@@ -278,7 +327,7 @@ const CounterOperator: React.FC<CounterOperatorProps> = ({ className }) => {
                 }
                 onClick={handleNextQueue}
                 isLoading={isNexting}
-                disabled={isNexting || isSkipping || isServing}
+                disabled={isNexting || isSkipping || isServing || isFetchingCurrent}
               >
                 Panggil Antrian Berikutnya
               </Button>

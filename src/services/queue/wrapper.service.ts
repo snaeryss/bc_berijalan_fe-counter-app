@@ -6,6 +6,7 @@ import {
   IResetQueuesRequest,
   ISkipQueueRequest,
   IUpdateQueueRequest,
+  IUpdateQueueStatusRequest, // Pastikan ini ada
 } from "@/interfaces/services/queue.interface";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import toast from "react-hot-toast";
@@ -25,6 +26,8 @@ import {
   apiUpdateQueue,
   apiBulkDeleteQueue,
   apiServeQueue,
+  apiGetActiveQueueByCounterId, // Pastikan ini ada
+  apiUpdateQueueStatus, // Pastikan ini ada
 } from "./api.service";
 
 const QUEUE_KEYS = {
@@ -118,17 +121,13 @@ export const useReleaseQueue = () => {
 export const useNextQueue = () => {
   return useMutation({
     mutationFn: (data: INextQueueRequest) => apiNextQueue(data),
-    // --- [PERBAIKAN FINAL #2] ---
-    // Hapus tanda '//' dari baris-baris di bawah ini.
-    // Logika ini PENTING untuk memberitahu komponen apa yang harus dilakukan setelah API call selesai.
     onSuccess: (response) => {
       if (response && response.error) {
         toast.error(response.error.message || "Gagal memproses antrian berikutnya");
         return;
       }
       if (response && response.status === true) {
-        // Kita tidak perlu toast success di sini karena UI akan berubah,
-        // biarkan komponen yang menanganinya.
+        // Biarkan komponen yang menanganinya.
       } else {
         toast.error(response?.message || "Gagal memproses antrian berikutnya");
       }
@@ -136,7 +135,6 @@ export const useNextQueue = () => {
     onError: (error) => {
       toast.error(error?.message || "Gagal memproses antrian berikutnya");
     },
-    // --- [AKHIR DARI PERBAIKAN FINAL #2] ---
   });
 };
 
@@ -193,6 +191,13 @@ export const useResetQueues = () => {
     onError: (error) => {
       toast.error(error?.message || "Failed to reset queues");
     },
+  });
+};
+
+// --- HOOK UNTUK TOMBOL "LIHAT ANTRIAN SAAT INI" ---
+export const useGetActiveQueue = () => {
+  return useMutation({
+    mutationFn: (counterId: number) => apiGetActiveQueueByCounterId(counterId),
   });
 };
 
@@ -293,5 +298,20 @@ export const useServeQueue = () => {
         toast.success("Antrian telah selesai dilayani.");
       }
     },
+  });
+};
+
+// --- HOOK UNTUK MANAJEMEN ANTRIAN ---
+export const useUpdateQueueStatus = () => {
+  return useMutation({
+    mutationFn: (data: IUpdateQueueStatusRequest) => apiUpdateQueueStatus(data),
+    onSuccess: (response) => {
+      if (response.status) {
+        toast.success(response.message || "Status antrian berhasil diperbarui.");
+      }
+    },
+    onError: (error) => {
+      toast.error(error.message || "Gagal memperbarui status antrian.");
+    }
   });
 };
