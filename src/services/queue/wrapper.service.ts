@@ -23,6 +23,8 @@ import {
   apiSearchQueue,
   apiSkipQueue,
   apiUpdateQueue,
+  apiBulkDeleteQueue,
+  apiServeQueue,
 } from "./api.service";
 
 const QUEUE_KEYS = {
@@ -116,28 +118,25 @@ export const useReleaseQueue = () => {
 export const useNextQueue = () => {
   return useMutation({
     mutationFn: (data: INextQueueRequest) => apiNextQueue(data),
+    // --- [PERBAIKAN FINAL #2] ---
+    // Hapus tanda '//' dari baris-baris di bawah ini.
+    // Logika ini PENTING untuk memberitahu komponen apa yang harus dilakukan setelah API call selesai.
     onSuccess: (response) => {
-      const toastId = toast.loading("Memproses permintaan...", {
-        duration: 5000,
-      });
       if (response && response.error) {
-        toast.error(response.error.message || "Failed to process next queue", {
-          id: toastId,
-        });
+        toast.error(response.error.message || "Gagal memproses antrian berikutnya");
         return;
       }
-
       if (response && response.status === true) {
-        toast.success("Berhasil memproses antrian berikutnya", { id: toastId });
+        // Kita tidak perlu toast success di sini karena UI akan berubah,
+        // biarkan komponen yang menanganinya.
       } else {
-        toast.error(response?.message || "Failed to process next queue", {
-          id: toastId,
-        });
+        toast.error(response?.message || "Gagal memproses antrian berikutnya");
       }
     },
     onError: (error) => {
-      toast.error(error?.message || "Failed to process next queue");
+      toast.error(error?.message || "Gagal memproses antrian berikutnya");
     },
+    // --- [AKHIR DARI PERBAIKAN FINAL #2] ---
   });
 };
 
@@ -271,6 +270,28 @@ export const useDeleteQueue = () => {
     },
     onError: (error) => {
       toast.error(error?.message || "Gagal menghapus antrian");
+    },
+  });
+};
+
+export const useBulkDeleteQueues = () => {
+  return useMutation({
+    mutationFn: (ids: number[]) => apiBulkDeleteQueue(ids),
+    onSuccess: (response) => {
+      if (response.status) {
+        toast.success(response.message || "Antrian terpilih berhasil dihapus");
+      }
+    },
+  });
+}
+
+export const useServeQueue = () => {
+  return useMutation({
+    mutationFn: (data: ISkipQueueRequest) => apiServeQueue(data),
+    onSuccess: (response) => {
+      if (response.status) {
+        toast.success("Antrian telah selesai dilayani.");
+      }
     },
   });
 };

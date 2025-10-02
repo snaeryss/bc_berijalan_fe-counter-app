@@ -1,34 +1,73 @@
 "use client";
 import { ICounter } from "@/interfaces/services/counter.interface";
-import { EQueueStatus, IQueue } from "@/interfaces/services/queue.interface";
-import React from "react";
+import { IQueue } from "@/interfaces/services/queue.interface";
+import React, { useEffect, useState } from "react";
 import Button from "../atoms/Button";
 import Card from "../atoms/Card";
 import Select from "../atoms/Select";
 import CurrentQueueDisplay from "../molecules/CurrentQueueDisplay";
 import { useGetAllCounters } from "@/services/counter/wrapper.service";
-import { useNextQueue, useSkipQueue } from "@/services/queue/wrapper.service";
+import {
+  useNextQueue,
+  useSkipQueue,
+  useServeQueue,
+} from "@/services/queue/wrapper.service";
 import { useCounterAppStore } from "@/stores/global-states/counter/counter-app.store";
 import toast from "react-hot-toast";
+import { useQueryClient } from "@tanstack/react-query";
+import { useSSEContext } from "./SSEProvider";
 
 interface CounterOperatorProps {
   className?: string;
 }
 
 const CounterOperator: React.FC<CounterOperatorProps> = ({ className }) => {
-  const { selectedCounter, setSelectedCounter, currentQueue, setCurrentQueue } = useCounterAppStore();
+  const [selectedCounter, setSelectedCounter] = useState<ICounter | null>(null);
+  const [currentQueue, setCurrentQueue] = useState<IQueue | null>(null);
 
-  const { data: countersData } = useGetAllCounters(); 
+  const queryClient = useQueryClient();
+  const { addEventListener } = useSSEContext();
+
+  const { data: countersData, refetch: refetchCounters } = useGetAllCounters();
   const { mutate: nextQueue, isPending: isNexting } = useNextQueue();
   const { mutate: skipQueue, isPending: isSkipping } = useSkipQueue();
+  const { mutate: serveQueue, isPending: isServing } = useServeQueue();
 
-  const activeCounters: ICounter[] = countersData?.data?.filter(c => c.isActive) || [];
+  useEffect(() => {
+    const handleQueueUpdate = () => {
+      console.log(
+        "SSE event received! Refetching counters and current queue..."
+      );
+      refetchCounters();
+      toast("Ada update antrian baru!", { icon: "🔔" });
+    };
+
+    const eventsToListen: string[] = [
+      "queue_claimed",
+      "queue_called",
+      "queue_skipped",
+      "queue_reset",
+      "all_queues_reset",
+      "queue_released",
+      "queue_served",
+    ];
+
+    const unsubscribers = eventsToListen.map((event) =>
+      addEventListener(event, handleQueueUpdate)
+    );
+
+    return () => {
+      unsubscribers.forEach((unsubscribe) => unsubscribe());
+    };
+  }, [addEventListener, refetchCounters, queryClient]);
+
+  const activeCounters: ICounter[] =
+    countersData?.data?.filter((c) => c.isActive) || [];
 
   const handleCounterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const counterId = parseInt(e.target.value);
     const counter = activeCounters.find((c) => c.id === counterId);
     setSelectedCounter(counter || null);
-    
     setCurrentQueue(null);
   };
 
@@ -37,13 +76,86 @@ const CounterOperator: React.FC<CounterOperatorProps> = ({ className }) => {
       toast.error("Silakan pilih counter terlebih dahulu.");
       return;
     }
+
+    // PERBAIKAN: Tambahkan toast loading
+    const toastId = toast.loading("Memanggil antrian berikutnya...");
+
     nextQueue(
       { counter_id: selectedCounter.id },
       {
         onSuccess: (res) => {
-          if (res.status && res.data) {
-            setCurrentQueue(res.data.queue);
+          // Dismiss loading toast
+          toast.dismiss(toastId);
+
+          // Check if response has error
+          if (res?.error) {
+            toast.error(res.error.message || "Gagal memanggil antrian berikutnya.");
+            return;
           }
+
+          // Check if response status is false
+          if (!res?.status) {
+            toast.error(res?.message || "Gagal memanggil antrian berikutnya.");
+            return;
+          }
+
+          // PERBAIKAN UTAMA: Update currentQueue dengan data dari response
+          if (res.data?.queue) {
+            setCurrentQueue(res.data.queue);
+            toast.success(
+              `Antrian nomor ${res.data.queue.number} berhasil dipanggil!`,
+              { duration: 3000 }
+            );
+          } else {
+            // Jika tidak ada antrian
+            toast.info("Tidak ada antrian berikutnya.");
+            setCurrentQueue(null);
+          }
+
+          // Refetch counters untuk update UI lainnya
+          refetchCounters();
+        },
+        onError: (error: any) => {
+          toast.dismiss(toastId);
+          toast.error(error?.message || "Terjadi kesalahan pada server.");
+        },
+      }
+    );
+  };
+
+  const handleServeQueue = () => {
+    if (!selectedCounter || !currentQueue) {
+      toast.error("Tidak ada antrian yang sedang dipanggil.");
+      return;
+    }
+
+    const toastId = toast.loading("Menyelesaikan pelayanan...");
+
+    serveQueue(
+      { counter_id: selectedCounter.id },
+      {
+        onSuccess: (res) => {
+          toast.dismiss(toastId);
+
+          if (res?.error) {
+            toast.error(res.error.message || "Gagal menyelesaikan pelayanan.");
+            return;
+          }
+
+          if (res.status) {
+            toast.success(
+              `Antrian nomor ${currentQueue.number} selesai dilayani.`
+            );
+            // PERBAIKAN: Reset currentQueue setelah selesai
+            setCurrentQueue(null);
+            refetchCounters();
+          } else {
+            toast.error(res?.message || "Gagal menyelesaikan pelayanan.");
+          }
+        },
+        onError: (error: any) => {
+          toast.dismiss(toastId);
+          toast.error(error?.message || "Terjadi kesalahan pada server.");
         },
       }
     );
@@ -54,15 +166,39 @@ const CounterOperator: React.FC<CounterOperatorProps> = ({ className }) => {
       toast.error("Silakan pilih counter terlebih dahulu.");
       return;
     }
+
+    if (!currentQueue) {
+      toast.error("Tidak ada antrian yang sedang dipanggil.");
+      return;
+    }
+
+    const toastId = toast.loading("Melewati antrian...");
+
     skipQueue(
       { counter_id: selectedCounter.id },
       {
         onSuccess: (res) => {
-          if (res.status && res.data) {
+          toast.dismiss(toastId);
 
-            setCurrentQueue(res.data.nextQueue || null);
-            toast.success(`Antrian nomor ${res.data.skippedQueue.number} telah dilewati.`);
+          if (res?.error) {
+            toast.error(res.error.message || "Gagal melewati antrian.");
+            return;
           }
+
+          if (res.status && res.data) {
+            toast.success(
+              `Antrian nomor ${res.data.skippedQueue.number} telah dilewati.`
+            );
+            // PERBAIKAN: Update dengan antrian berikutnya (jika ada)
+            setCurrentQueue(res.data.nextQueue || null);
+            refetchCounters();
+          } else {
+            toast.error(res?.message || "Gagal melewati antrian.");
+          }
+        },
+        onError: (error: any) => {
+          toast.dismiss(toastId);
+          toast.error(error?.message || "Terjadi kesalahan pada server.");
         },
       }
     );
@@ -79,7 +215,7 @@ const CounterOperator: React.FC<CounterOperatorProps> = ({ className }) => {
         </p>
 
         <Select
-          label="Pilih Counter"
+          label="Pilih Counter Anda"
           fullWidth
           options={[
             { value: "", label: "Pilih Counter", disabled: true },
@@ -103,30 +239,48 @@ const CounterOperator: React.FC<CounterOperatorProps> = ({ className }) => {
           />
 
           <div className="flex gap-4">
-            <Button
-              fullWidth
-              leftIcon={
-                <span className="material-symbols-outlined">arrow_forward</span>
-              }
-              onClick={handleNextQueue}
-              isLoading={isNexting}
-              disabled={isNexting || isSkipping}
-            >
-              Panggil Antrian Berikutnya
-            </Button>
-
-            {currentQueue && currentQueue.status === "CALLED" && (
+            {currentQueue && currentQueue.status === "CALLED" ? (
+              <>
+                <Button
+                  fullWidth
+                  variant="success"
+                  leftIcon={
+                    <span className="material-symbols-outlined">
+                      check_circle
+                    </span>
+                  }
+                  onClick={handleServeQueue}
+                  isLoading={isServing}
+                  disabled={isNexting || isSkipping || isServing}
+                >
+                  Selesai Melayani
+                </Button>
+                <Button
+                  fullWidth
+                  variant="danger"
+                  leftIcon={
+                    <span className="material-symbols-outlined">skip_next</span>
+                  }
+                  onClick={handleSkipQueue}
+                  isLoading={isSkipping}
+                  disabled={isNexting || isServing || isSkipping}
+                >
+                  Lewati Antrian
+                </Button>
+              </>
+            ) : (
               <Button
                 fullWidth
-                variant="danger"
                 leftIcon={
-                  <span className="material-symbols-outlined">skip_next</span>
+                  <span className="material-symbols-outlined">
+                    arrow_forward
+                  </span>
                 }
-                onClick={handleSkipQueue}
-                isLoading={isSkipping}
-                disabled={isNexting || isSkipping}
+                onClick={handleNextQueue}
+                isLoading={isNexting}
+                disabled={isNexting || isSkipping || isServing}
               >
-                Lewati Antrian
+                Panggil Antrian Berikutnya
               </Button>
             )}
           </div>
@@ -139,5 +293,4 @@ const CounterOperator: React.FC<CounterOperatorProps> = ({ className }) => {
     </div>
   );
 };
-
 export default CounterOperator;

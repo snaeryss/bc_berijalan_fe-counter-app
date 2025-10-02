@@ -1,3 +1,5 @@
+// src/services/queue/api.service.ts
+
 "use server";
 
 import { satellite } from "@/config/api.config";
@@ -16,11 +18,13 @@ import {
   ISkipQueueRequest,
   ISkipQueueResponse,
   IUpdateQueueRequest,
+  IUpdateQueueStatusRequest,
 } from "@/interfaces/services/queue.interface";
 import { errorMessage } from "@/utils/error.util";
 
 const API_BASE_PATH = "/api/v1/queues";
 
+// ... (fungsi-fungsi lain dari apiGetMetrics hingga apiSearchQueue tidak perlu diubah) ...
 export const apiGetMetrics = async () => {
   try {
     const res = await satellite.get<APIBaseResponse<IGetQueueMetricsResponse>>(
@@ -78,17 +82,20 @@ export const apiSearchQueue = async (queueNumberOrCounterName: string) => {
   }
 };
 
+// --- [PERBAIKAN FINAL #1] ---
 export const apiNextQueue = async (data: INextQueueRequest) => {
   try {
+    // Pastikan argumen kedua adalah objek kosong `{}`
     const res = await satellite.post<APIBaseResponse<INextQueueResponse>>(
-      `${API_BASE_PATH}/next`,
-      data
+      `${API_BASE_PATH}/next/${data.counter_id}`,
+      {} // <-- INI PERUBAHANNYA
     );
     return res.data;
   } catch (e) {
     return errorMessage<INextQueueResponse>(e);
   }
 };
+// --- [AKHIR DARI PERBAIKAN FINAL #1] ---
 
 export const apiResetQueues = async (data: IResetQueuesRequest) => {
   try {
@@ -158,5 +165,33 @@ export const apiDeleteQueue = async (id: number) => {
     return res.data;
   } catch (e) {
     return errorMessage<{ success: boolean }>(e);
+  }
+};
+
+export const apiBulkDeleteQueue = async (ids: number[]) => {
+  try {
+    const res = await satellite.post<APIBaseResponse<{ success: boolean }>>(`${API_BASE_PATH}/bulk-delete`, { ids });
+    return res.data;
+  } catch (e) {
+    return errorMessage<{ count: number }>(e);
+  }
+}
+
+export const apiServeQueue = async (data: ISkipQueueRequest) => {
+  try {
+    const res = await satellite.post<APIBaseResponse<IQueue>>(`${API_BASE_PATH}/serve`, data);
+    return res.data;
+  } catch (e) {
+    return errorMessage<IQueue>(e);
+  }
+};
+
+export const apiUpdateQueueStatus = async (data: IUpdateQueueStatusRequest) => {
+  try {
+    const { id, status } = data;
+    const res = await satellite.patch<APIBaseResponse<IQueue>>(`${API_BASE_PATH}/${id}/status`, { status });
+    return res.data;
+  } catch (e) {
+    return errorMessage<IQueue>(e);
   }
 };

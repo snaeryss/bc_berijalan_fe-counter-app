@@ -92,3 +92,10 @@ export interface IUpdateQueueRequest {
   queue_number?: number;
   status?: EQueueStatus;
 }
+
+export type TQueueStatusAction = "active" | "inactive" | "disable";
+
+export interface IUpdateQueueStatusRequest {
+  id: number;
+  status: TQueueStatusAction;
+}

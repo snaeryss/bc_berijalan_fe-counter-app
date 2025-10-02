@@ -1,10 +1,14 @@
+// src/components/organisms/QueueStatusPage.tsx
+
 "use client";
 import { IQueue } from "@/interfaces/services/queue.interface";
+import { useSearchQueue } from "@/services/queue/wrapper.service";
 import React, { useState } from "react";
 import Button from "../atoms/Button";
 import Card from "../atoms/Card";
+import Input from "../atoms/Input";
 import QueueCard from "../molecules/QueueCard";
-import ReleaseQueueForm from "../molecules/ReleaseQueueForm";
+import { Loader } from "../atoms/Loader";
 
 interface QueueStatusCheckerProps {
   className?: string;
@@ -13,13 +17,22 @@ interface QueueStatusCheckerProps {
 const QueueStatusChecker: React.FC<QueueStatusCheckerProps> = ({
   className,
 }) => {
-  const [queueNumber, setQueueNumber] = useState("");
-  const [queueDetails, setQueueDetails] = useState<IQueue | null>(null);
-  const [notFound, setNotFound] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [submittedQuery, setSubmittedQuery] = useState("");
 
-  const handleSubmit = () => {};
+  const {
+    data: queueResults,
+    isLoading,
+    isFetching,
+  } = useSearchQueue(submittedQuery, !!submittedQuery);
 
-  const handleReleaseQueue = () => {};
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setSubmittedQuery(searchQuery);
+  };
+
+  const queues = queueResults?.data || [];
+  const notFound = submittedQuery && !isFetching && queues.length === 0;
 
   return (
     <div className={className}>
@@ -28,36 +41,47 @@ const QueueStatusChecker: React.FC<QueueStatusCheckerProps> = ({
           Cek Status Antrian
         </h2>
         <p className="text-center text-gray-600 mb-6">
-          Masukkan nomor antrian Anda untuk memeriksa status
+          Masukkan nomor antrian atau nama counter untuk memeriksa status
         </p>
 
-        <ReleaseQueueForm onSubmit={handleSubmit} isLoading={false} />
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <Input
+            label="Nomor Antrian atau Nama Counter"
+            placeholder="Contoh: 123 atau Counter A"
+            fullWidth
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            leftIcon={
+              <span className="material-symbols-outlined">search</span>
+            }
+          />
+          <div className="flex justify-end">
+            <Button
+              type="submit"
+              isLoading={isLoading || isFetching}
+              disabled={!searchQuery || isLoading || isFetching}
+            >
+              Cari Antrian
+            </Button>
+          </div>
+        </form>
       </Card>
 
-      {queueDetails ? (
-        <div className="space-y-4">
-          <QueueCard queue={queueDetails} />
+      {(isLoading || isFetching) && <Loader />}
 
-          {queueDetails.status === "CLAIMED" && (
-            <Button
-              variant="danger"
-              fullWidth
-              onClick={handleReleaseQueue}
-              leftIcon={
-                <span className="material-symbols-outlined">exit_to_app</span>
-              }
-            >
-              Lepaskan Nomor Antrian
-            </Button>
-          )}
+      {!isFetching && queues.length > 0 && (
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold">Hasil Pencarian:</h3>
+          {queues.map((queue) => (
+            <QueueCard key={queue.id} queue={queue} />
+          ))}
         </div>
-      ) : (
-        notFound &&
-        queueNumber && (
-          <Card variant="outline" className="text-center py-6 text-gray-500">
-            Nomor antrian <strong>{queueNumber}</strong> tidak ditemukan.
-          </Card>
-        )
+      )}
+
+      {notFound && (
+        <Card variant="outline" className="text-center py-6 text-gray-500">
+          Antrian dengan nomor atau nama counter <strong>{submittedQuery}</strong> tidak ditemukan.
+        </Card>
       )}
     </div>
   );
