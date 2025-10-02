@@ -1,5 +1,3 @@
-// src/services/queue/api.service.ts
-
 "use server";
 
 import { satellite } from "@/config/api.config";
@@ -24,7 +22,6 @@ import { errorMessage } from "@/utils/error.util";
 
 const API_BASE_PATH = "/api/v1/queues";
 
-// ... (fungsi-fungsi lain dari apiGetMetrics hingga apiSearchQueue tidak perlu diubah) ...
 export const apiGetMetrics = async () => {
   try {
     const res = await satellite.get<APIBaseResponse<IGetQueueMetricsResponse>>(
@@ -82,20 +79,17 @@ export const apiSearchQueue = async (queueNumberOrCounterName: string) => {
   }
 };
 
-// --- [PERBAIKAN FINAL #1] ---
 export const apiNextQueue = async (data: INextQueueRequest) => {
   try {
-    // Pastikan argumen kedua adalah objek kosong `{}`
     const res = await satellite.post<APIBaseResponse<INextQueueResponse>>(
       `${API_BASE_PATH}/next/${data.counter_id}`,
-      {} // <-- INI PERUBAHANNYA
+      {} 
     );
     return res.data;
   } catch (e) {
     return errorMessage<INextQueueResponse>(e);
   }
 };
-// --- [AKHIR DARI PERBAIKAN FINAL #1] ---
 
 export const apiResetQueues = async (data: IResetQueuesRequest) => {
   try {

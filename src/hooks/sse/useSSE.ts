@@ -19,7 +19,6 @@ export const useSSE = () => {
       eventSource.close(); 
     };
 
-    // Cleanup: Tutup koneksi saat komponen di-unmount
     return () => {
       if (eventSourceRef.current) {
         eventSourceRef.current.close();

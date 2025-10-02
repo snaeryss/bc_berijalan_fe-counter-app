@@ -8,7 +8,9 @@ import Select from "../atoms/Select";
 import CurrentQueueDisplay from "../molecules/CurrentQueueDisplay";
 import { useGetAllCounters } from "@/services/counter/wrapper.service";
 import {
-  useGetActiveQueue, // <-- 1. IMPORT HOOK BARU
+  useGetAllQueues,
+  useUpdateQueue,
+  useGetActiveQueue, 
   useNextQueue,
   useServeQueue,
   useSkipQueue,
@@ -22,28 +24,38 @@ interface CounterOperatorProps {
 }
 
 const CounterOperator: React.FC<CounterOperatorProps> = ({ className }) => {
-  const [selectedCounter, setSelectedCounter] = useState<ICounter | null>(
-    null
-  );
+  const [selectedCounter, setSelectedCounter] = useState<ICounter | null>(null);
   const [currentQueue, setCurrentQueue] = useState<IQueue | null>(null);
+  const [waitingQueues, setWaitingQueues] = useState<IQueue[]>([]); 
 
   const queryClient = useQueryClient();
   const { addEventListener } = useSSEContext();
 
   const { data: countersData, refetch: refetchCounters } = useGetAllCounters();
-  const { mutate: getActiveQueue, isPending: isFetchingCurrent } =
-    useGetActiveQueue(); // <-- 2. INISIALISASI HOOK
+  const { mutate: getActiveQueue, isPending: isFetchingCurrent } = useGetActiveQueue(); 
   const { mutate: nextQueue, isPending: isNexting } = useNextQueue();
   const { mutate: skipQueue, isPending: isSkipping } = useSkipQueue();
   const { mutate: serveQueue, isPending: isServing } = useServeQueue();
+  const { mutate: updateQueue, isPending: isUpdating } = useUpdateQueue();
 
-  // ... (useEffect tidak ada perubahan)
+  const { data: waitingQueuesData, refetch: refetchWaitingQueues } = useGetAllQueues({
+    counter_id: selectedCounter?.id,
+    status: 'CLAIMED',
+  });
+
+  useEffect(() => {
+    if (waitingQueuesData?.data) {
+      setWaitingQueues(waitingQueuesData.data);
+    }
+  }, [waitingQueuesData]);
+
   useEffect(() => {
     const handleQueueUpdate = () => {
       console.log(
         "SSE event received! Refetching counters and current queue..."
       );
       refetchCounters();
+      refetchWaitingQueues();
       toast("Ada update antrian baru!", { icon: "🔔" });
     };
 
@@ -64,7 +76,7 @@ const CounterOperator: React.FC<CounterOperatorProps> = ({ className }) => {
     return () => {
       unsubscribers.forEach((unsubscribe) => unsubscribe());
     };
-  }, [addEventListener, refetchCounters, queryClient]);
+  }, [addEventListener, refetchCounters, refetchWaitingQueues, queryClient]);
 
 
   const activeCounters: ICounter[] =
@@ -74,15 +86,17 @@ const CounterOperator: React.FC<CounterOperatorProps> = ({ className }) => {
     const counterId = parseInt(e.target.value);
     const counter = activeCounters.find((c) => c.id === counterId);
     setSelectedCounter(counter || null);
-    setCurrentQueue(null); // Reset saat ganti counter
+    setCurrentQueue(null); 
   };
-  
-  // 3. BUAT FUNGSI BARU UNTUK FETCH ANTRIAN SAAT INI
+
   const handleFetchCurrentQueue = () => {
     if (!selectedCounter) return;
 
+    const toastId = toast.loading("Mengecek antrian saat ini...");
+
     getActiveQueue(selectedCounter.id, {
       onSuccess: (res) => {
+        toast.dismiss(toastId);
         if (res.status && res.data) {
           setCurrentQueue(res.data);
           toast.success(`Antrian saat ini: ${res.data.number}`);
@@ -97,37 +111,29 @@ const CounterOperator: React.FC<CounterOperatorProps> = ({ className }) => {
     });
   };
 
-
-  // ... (handleNextQueue, handleServeQueue, handleSkipQueue tidak ada perubahan)
   const handleNextQueue = () => {
     if (!selectedCounter) {
       toast.error("Silakan pilih counter terlebih dahulu.");
       return;
     }
-
-    // PERBAIKAN: Tambahkan toast loading
     const toastId = toast.loading("Memanggil antrian berikutnya...");
 
     nextQueue(
       { counter_id: selectedCounter.id },
       {
         onSuccess: (res) => {
-          // Dismiss loading toast
           toast.dismiss(toastId);
 
-          // Check if response has error
           if (res?.error) {
             toast.error(res.error.message || "Gagal memanggil antrian berikutnya.");
             return;
           }
 
-          // Check if response status is false
           if (!res?.status) {
             toast.error(res?.message || "Gagal memanggil antrian berikutnya.");
             return;
           }
 
-          // PERBAIKAN UTAMA: Update currentQueue dengan data dari response
           if (res.data?.queue) {
             setCurrentQueue(res.data.queue);
             toast.success(
@@ -135,12 +141,10 @@ const CounterOperator: React.FC<CounterOperatorProps> = ({ className }) => {
               { duration: 3000 }
             );
           } else {
-            // Jika tidak ada antrian
             toast.info("Tidak ada antrian berikutnya.");
             setCurrentQueue(null);
           }
 
-          // Refetch counters untuk update UI lainnya
           refetchCounters();
         },
         onError: (error: any) => {
@@ -174,7 +178,7 @@ const CounterOperator: React.FC<CounterOperatorProps> = ({ className }) => {
             toast.success(
               `Antrian nomor ${currentQueue.number} selesai dilayani.`
             );
-            // PERBAIKAN: Reset currentQueue setelah selesai
+
             setCurrentQueue(null);
             refetchCounters();
           } else {
@@ -217,7 +221,6 @@ const CounterOperator: React.FC<CounterOperatorProps> = ({ className }) => {
             toast.success(
               `Antrian nomor ${res.data.skippedQueue.number} telah dilewati.`
             );
-            // PERBAIKAN: Update dengan antrian berikutnya (jika ada)
             setCurrentQueue(res.data.nextQueue || null);
             refetchCounters();
           } else {
@@ -261,7 +264,6 @@ const CounterOperator: React.FC<CounterOperatorProps> = ({ className }) => {
 
       {selectedCounter ? (
         <div className="space-y-6">
-          {/* 4. TAMPILKAN TOMBOL BARU JIKA TIDAK ADA ANTRIAN AKTIF DI LAYAR */}
           {!currentQueue && (
             <Card variant="outline">
               <div className="flex items-center justify-between">

@@ -3,7 +3,13 @@ import { cn } from "@/utils/classname.util";
 import React from "react";
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: "primary" | "secondary" | "outline" | "ghost" | "danger";
+  variant?:
+    | "primary"
+    | "secondary"
+    | "outline"
+    | "ghost"
+    | "danger"
+    | "success";
   size?: "sm" | "md" | "lg";
   fullWidth?: boolean;
   isLoading?: boolean;
@@ -37,6 +43,8 @@ const Button: React.FC<ButtonProps> = ({
       "bg-transparent hover:bg-gray-100 active:bg-gray-200 focus-visible:ring-gray-500",
     danger:
       "bg-red-600 text-white hover:bg-red-700 active:bg-red-800 focus-visible:ring-red-500",
+    success:
+      "bg-green-600 text-white hover:bg-green-700 active:bg-green-800 focus-visible:ring-green-500",
   };
 
   const sizeStyles = {

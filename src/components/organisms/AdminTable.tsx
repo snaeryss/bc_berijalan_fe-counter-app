@@ -42,7 +42,6 @@ export default function AdminTable({
     deleteAdmin.mutate(id, {
       onSuccess: (res) => {
         if (res.error) {
-          // Handle error (e.g., show a toast notification)
           return;
         }
 

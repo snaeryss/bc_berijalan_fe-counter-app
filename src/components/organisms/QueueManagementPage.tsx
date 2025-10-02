@@ -1,5 +1,7 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { useSSEContext } from "./SSEProvider";
 import Card from "../atoms/Card";
 import Button from "../atoms/Button";
 import QueueTable from "./QueueTable";
@@ -18,6 +20,7 @@ import {
   TQueueStatusAction,
 } from "@/interfaces/services/queue.interface";
 import QueueFormModal from "./QueueFormModal";
+import toast from "react-hot-toast";
 
 const QueueManagementPage: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -32,6 +35,29 @@ const QueueManagementPage: React.FC = () => {
   const { mutate: bulkDelete, isPending: isBulkDeleting } =
     useBulkDeleteQueues();
 
+  const queryClient = useQueryClient();
+  const { addEventListener } = useSSEContext();
+
+  useEffect(() => {
+    const handleQueueUpdate = () => {
+      toast("Data antrian diperbarui secara real-time.", { icon: "🔄" });
+      refetch(); 
+    };
+
+    const eventsToListen: string[] = [
+      "queue_claimed", "queue_called", "queue_served", "queue_skipped", 
+      "queue_reset", "all_queues_reset", "queue_released"
+    ];
+
+    const unsubscribers = eventsToListen.map(event =>
+      addEventListener(event, handleQueueUpdate)
+    );
+
+    return () => {
+      unsubscribers.forEach(unsubscribe => unsubscribe());
+    };
+  }, [addEventListener, queryClient, refetch]);
+  
   const handleOpenCreate = () => {
     setEditingQueue(null);
     setIsModalOpen(true);

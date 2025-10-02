@@ -4,30 +4,25 @@ import Card from "../atoms/Card";
 import { ICurrentQueuesResponse } from "@/interfaces/services/queue.interface";
 import CurrentQueueDisplay from "../molecules/CurrentQueueDisplay";
 import { useGetCurrentQueues } from "@/services/queue/wrapper.service";
-import { useQueryClient } from "@tanstack/react-query"; // <-- IMPORT UNTUK REFETCH
+import { useQueryClient } from "@tanstack/react-query"; 
 
 interface QueueDisplayBoardProps {
   className?: string;
 }
 
 const QueueDisplayPage: React.FC<QueueDisplayBoardProps> = ({ className }) => {
-  // Mengambil data awal saat halaman dimuat
   const { data: currentQueues } = useGetCurrentQueues();
 
-  // Mengambil instance dari SSE context dan React Query client
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    // Fungsi untuk memicu pengambilan data ulang
+
     const refetchCurrentQueues = () => {
       console.log("SSE event received! Refetching current queues...");
-      // Memberitahu React Query bahwa data 'current queues' sudah tidak valid
-      // dan harus diambil ulang dari server.
       queryClient.invalidateQueries({ queryKey: ["queues", "current"] });
     };
 
-    // Daftarkan 'listener' untuk setiap event yang relevan dari backend.
-    // Setiap kali salah satu event ini diterima, fungsi 'refetchCurrentQueues' akan dijalankan.
+    
     const eventsToListen: string[] = [
       "queue_claimed",
       "queue_released",
@@ -41,8 +36,6 @@ const QueueDisplayPage: React.FC<QueueDisplayBoardProps> = ({ className }) => {
       addEventListener(event, refetchCurrentQueues)
     );
 
-    // Cleanup: Hapus semua listener saat komponen tidak lagi ditampilkan
-    // untuk mencegah memory leak.
   }, [addEventListener, queryClient]);
 
   return (

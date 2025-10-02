@@ -1,5 +1,3 @@
-// src/components/organisms/QueueStatusPage.tsx
-
 "use client";
 import { IQueue } from "@/interfaces/services/queue.interface";
 import { useSearchQueue } from "@/services/queue/wrapper.service";

@@ -47,7 +47,6 @@ const QueueFormModal: React.FC<QueueFormModalProps> = ({ isOpen, onClose, onSubm
           status: queue.status,
         });
       } else {
-        // Mode Buat Baru: Mengosongkan form
         reset({
           counter_id: undefined,
           queue_number: undefined,

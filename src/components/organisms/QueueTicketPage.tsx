@@ -85,8 +85,6 @@ const QueueTicketPage: FC<QueueTicketProps> = ({ className }) => {
             <div className="text-5xl font-bold text-blue-600 mb-1">
               {claimedQueue?.queueNumber}
             </div>
-            {/* --- [KETERANGAN PERBAIKAN UX] --- */}
-            {/* Menampilkan nama counter di bawah nomor antrian */}
             <div className="text-lg font-semibold text-gray-700 mb-4">
               di {claimedQueue?.counterName}
             </div>

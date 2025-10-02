@@ -6,7 +6,7 @@ import {
   IResetQueuesRequest,
   ISkipQueueRequest,
   IUpdateQueueRequest,
-  IUpdateQueueStatusRequest, // Pastikan ini ada
+  IUpdateQueueStatusRequest, 
 } from "@/interfaces/services/queue.interface";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import toast from "react-hot-toast";
@@ -26,8 +26,8 @@ import {
   apiUpdateQueue,
   apiBulkDeleteQueue,
   apiServeQueue,
-  apiGetActiveQueueByCounterId, // Pastikan ini ada
-  apiUpdateQueueStatus, // Pastikan ini ada
+  apiGetActiveQueueByCounterId, 
+  apiUpdateQueueStatus, 
 } from "./api.service";
 
 const QUEUE_KEYS = {
@@ -127,7 +127,6 @@ export const useNextQueue = () => {
         return;
       }
       if (response && response.status === true) {
-        // Biarkan komponen yang menanganinya.
       } else {
         toast.error(response?.message || "Gagal memproses antrian berikutnya");
       }
@@ -194,7 +193,6 @@ export const useResetQueues = () => {
   });
 };
 
-// --- HOOK UNTUK TOMBOL "LIHAT ANTRIAN SAAT INI" ---
 export const useGetActiveQueue = () => {
   return useMutation({
     mutationFn: (counterId: number) => apiGetActiveQueueByCounterId(counterId),
@@ -301,7 +299,6 @@ export const useServeQueue = () => {
   });
 };
 
-// --- HOOK UNTUK MANAJEMEN ANTRIAN ---
 export const useUpdateQueueStatus = () => {
   return useMutation({
     mutationFn: (data: IUpdateQueueStatusRequest) => apiUpdateQueueStatus(data),
