@@ -63,7 +63,7 @@ const Nav: React.FC<{ className?: string }> = ({ className }) => {
       <div className="flex flex-col space-y-1">
         <NavItem href="/admin" icon="shield_person" label="Manajemen Admin" />
         <NavItem href="/counter-operator" icon="support_agent" label="Operator Counter" />
-
+        
         <div>
           <button
             onClick={() => setIsManagementOpen(!isManagementOpen)}
@@ -93,6 +93,7 @@ const Nav: React.FC<{ className?: string }> = ({ className }) => {
             <div className="mt-2 pl-7 space-y-1 border-l-2 border-gray-200 ml-4">
               <NavItem href="/counter-manager" icon="store" label="Manajemen Counter" />
               <NavItem href="/queue-management" icon="receipt_long" label="Manajemen Antrian" />
+              <NavItem href="/cron-management" icon="schedule" label="Manajemen Cron" />
             </div>
           )}
         </div>

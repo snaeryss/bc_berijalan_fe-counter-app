@@ -5,4 +5,6 @@ export const protectedRoutes = [
   "/counter-manager",
   "/admin",
   "/admin-management",
+  "/cron-management",
+  "/queue-management"
 ];
